@@ -66,7 +66,6 @@ plt.xlabel(r'$y^+$')
 plt.legend( loc='best')
 fig.tight_layout()
 plt.savefig('figs/%d-nu_tilde-semilog.pdf'%Re_tau_round)
-plt.show()
 
 np.save('%d-last'%Re_tau_round,states[-1])
 np.savetxt('data/%d-final-state.dat'%Re_tau_round,np.vstack([Yp,states[-1][:N],get_nuT(states[-1][N:])]).T)
