@@ -1,13 +1,12 @@
-import numpy as np
-import numpy.linalg as LA
-from scipy.integrate import ode
-import matplotlib.pyplot as plt
 import os.path
 
-from sa import *
+import matplotlib.pyplot as plt
+import numpy as np
 
 # from sa_full import *
 from rans import *
+from sa import *
+
 # from backward_euler import *
 
 dt = 1e-2

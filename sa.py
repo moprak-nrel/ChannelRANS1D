@@ -1,9 +1,9 @@
+
 import numpy as np
-import ke
-from scipy.interpolate import splev, splrep
 import scipy.interpolate as interp
-import scipy.optimize as opt
-import copy
+from scipy.interpolate import splev, splrep
+
+import ke
 
 Re_tau_round = 5200
 Re_tau_table = {

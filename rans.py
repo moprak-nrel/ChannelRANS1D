@@ -1,9 +1,9 @@
 import numpy as np
-from scipy.integrate import ode
-import matplotlib.pyplot as plt
 import numpy.linalg as LA
+from scipy.integrate import ode
 
 from sa import *
+
 # from sa_full import *
 
 
@@ -23,6 +23,6 @@ def time_march(initial_state, steps, dt):
         states[i, :] = integrator.integrate(integrator.t + dt)
         print(i, LA.norm(get_dXdt(states[i, :])))
 
-        if i % 10 is 0:
+        if i % 10 == 0:
             np.save("%d-last" % Re_tau, states[i, :])
     return states
