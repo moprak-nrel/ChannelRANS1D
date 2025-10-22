@@ -1,4 +1,3 @@
-
 import numpy as np
 import scipy.interpolate as interp
 from scipy.interpolate import splev, splrep
@@ -12,19 +11,13 @@ Re_tau_table = {
     1000: 1000.512,
     2000: 1994.756,
     5200: 5185.897,
-    10000: 10000,
 }
 Re_tau = Re_tau_table[Re_tau_round]
-if Re_tau_round != 10000:
-    data = ke.read_data(Re_tau_round)
-    Y_data = data["Y"]
-    Y = Y_data
-else:
-    data = ke.read_data(1000)
-    Y_data = data["Y"]
-    Y = Y_data
-    # Y = np.loadtxt( 'data/y_10000.dat' )
+data = ke.read_data(Re_tau_round)
+Y_data = data["Y"]
+Y = Y_data
 # Y = np.linspace(0,1,300)
+
 N = len(Y)
 Yp = Y * Re_tau
 K = 0.41
@@ -144,26 +137,13 @@ def get_dnudt(U, dyU, nu_tilde, dynu, dyynu):
 
 
 def get_nu_tilde_init():
-    if Re_tau_round == 10000:
-        # nu_tilde_init = K * Y
-        # nuT_data = get_nuT( nu_tilde_init)
-        nuT_data = (-data["uv"] / data["dUdy"]) / Re_tau
-    else:
-        nuT_data = (-data["uv"] / data["dUdy"]) / Re_tau
+    nuT_data = (-data["uv"] / data["dUdy"]) / Re_tau
     tck = splrep(Y_data, nuT_data, k=5)
     return splev(Y, tck)
 
 
 def get_U_init():
-    if Re_tau_round == 10000:
-        Udata = data["U"]
-        # instantiating as log law
-        # Udata = np.zeros_like( Yp )
-        # switch = 8
-        # Udata[1:switch] = K * Yp[1:switch]
-        # Udata[switch:] = np.log( Yp[switch:] ) / K + 5.1
-    else:
-        Udata = data["U"]
+    Udata = data["U"]
     tck = splrep(Y_data, Udata, k=5)
     return splev(Y, tck)
 
