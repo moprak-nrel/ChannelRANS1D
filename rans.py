@@ -1,28 +1,19 @@
 import numpy as np
-import numpy.linalg as LA
 from scipy.integrate import ode
 
-from sa import *
-
-# from sa_full import *
-
-
-# state:= [u, nu_tilda]^T
-def rhs(t, state):
-    return get_dXdt(state)
+import sa
 
 
 def time_march(initial_state, steps, dt):
+    def rhs(t, state):
+        return sa.get_dXdt(state)
     integrator = ode(rhs).set_integrator("lsoda")
     integrator.set_initial_value(initial_state, 0)
-    states = np.empty((steps + 1, 2 * N))
+    states = np.empty((steps + 1, len(initial_state)))
     i = 0
     states[0, :] = initial_state
     while integrator.successful() and i < steps:
         i += 1
         states[i, :] = integrator.integrate(integrator.t + dt)
-        print(i, LA.norm(get_dXdt(states[i, :])))
-
-        if i % 10 == 0:
-            np.save("%d-last" % Re_tau, states[i, :])
+        print(i, np.linalg.norm(sa.get_dXdt(states[i, :])))
     return states
