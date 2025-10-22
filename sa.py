@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.interpolate as interp
-from scipy.interpolate import splev, splrep
 
 import ke
 
@@ -19,12 +18,13 @@ Y = Y_data
 
 N = len(Y)
 Yp = Y * Re_tau
-K = 0.41
+kappa = 0.41
 nu = 1.0 / Re_tau
+
 sigmav = 2.0 / 3.0
 cb1 = 0.1355
 cb2 = 0.622
-cw1 = cb1 / K**2 + (1 + cb2) / sigmav
+cw1 = cb1 / kappa**2 + (1 + cb2) / sigmav
 
 
 def get_spline_rep_U(U):
@@ -69,7 +69,7 @@ def get_dXdt(state):
 def get_dUdt(U, dyU, dyyU, nu_tilde):
     nuT = get_nuT(nu_tilde)
     ntck = get_spline_rep_nu(nuT)
-    res = 1 + (1.0 / Re_tau + nuT) * dyyU + get_y_der(ntck) * dyU
+    res = 1 + (nu + nuT) * dyyU + get_y_der(ntck) * dyU
     return res
 
 
@@ -83,24 +83,17 @@ def get_Stilde(dyU, nu_tilde):
     S_tilde = np.zeros_like(Y)
     S_tilde[1:] = (
         dyU[1:]
-        + (-(nu_tilde[1:] ** 2) / (nu + nuT[1:]) + nu_tilde[1:]) / (K * Y[1:]) ** 2
+        + (-(nu_tilde[1:] ** 2) / (nu + nuT[1:]) + nu_tilde[1:]) / (kappa * Y[1:]) ** 2
     )
     return S_tilde
 
 
 def get_Pnu(dyU, nu_tilde):
-    return (
-        cb1
-        * (dyU + (-(nu_tilde**2) / (nu + nu_tilde) + nu_tilde) / ((K * Y) ** 2))
-        * nu_tilde
-    )  # S*nu_tilde
-    # return (dyU + ( - nu_tilde**2/(nu+nu_tilde) + nu_tilde)/((K*Y)**2))*nu_tilde # S*nu_tilde
+    return cb1 * get_Stilde(dyU, nu_tilde) * nu_tilde
 
 
 def get_r(dyU, nu_tilde):
-    # den = (K*Y)**2*dyU - nu_tilde**2/(nu+nu_tilde) + nu_tilde
-    # r = nu_tilde/den
-    r = nu_tilde / (get_Stilde(dyU, nu_tilde) * (K * Y) ** 2)
+    r = nu_tilde / (get_Stilde(dyU, nu_tilde) * (kappa * Y) ** 2)
     r[0] = 0
     return r
 
@@ -112,7 +105,8 @@ def get_g(r):
 def get_f(r):
     g = get_g(r)
     res = g * (65.0 / (64.0 + g**6.0)) ** (1.0 / 6.0)
-    return np.minimum(res, 2.00517475)
+    # return np.minimum(res, 2.00517475)
+    return res
 
 
 def get_Enu(dyU, nu_tilde):
@@ -133,11 +127,9 @@ def get_dnudt(U, dyU, nu_tilde, dynu, dyynu):
 
 def get_nu_tilde_init():
     nuT_data = (-data["uv"] / data["dUdy"]) / Re_tau
-    tck = splrep(Y_data, nuT_data, k=5)
-    return splev(Y, tck)
+    return nuT_data
 
 
 def get_U_init():
     Udata = data["U"]
-    tck = splrep(Y_data, Udata, k=5)
-    return splev(Y, tck)
+    return Udata
