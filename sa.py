@@ -61,46 +61,6 @@ def get_yy_der(tck):
     return res
 
 
-def get_dy_fd(X):
-    h = Y[2] - Y[0]
-    res = np.empty_like(X)
-    # Neumann
-    res[-1] = 0
-    # Central
-    res[1:-1] = (X[2:] - X[:-2]) / h
-    # Forward?
-    res[0] = 2 * (X[1] - X[0]) / h
-    return res
-
-
-def get_dy2_fd(X):
-    h = Y[1] - Y[0]
-    res = np.empty_like(X)
-    # Standard central difference
-    # f'' = (f(y+h) + f(y-h) - 2*f(y))/h**2
-    res[1:-1] = (X[2:] + X[:-2] - 2 * X[1:-1]) / h**2
-    res[0] = (X[2] + X[0] - 2 * X[1]) / h**2
-    # for the neumann end f' = 0
-    # f(y-h) = f(y) + 1/2 * f''(y) * h**2
-    # => f''(y) = 2*(f(y-h) - f(y))/h**2
-    res[-1] = 2 * (X[-2] - X[-1]) / h**2
-    return res
-
-
-def get_dXdt_fd(state):
-    U = state[:N]
-    nu_tilde = state[N:]
-    dyU = get_dy_fd(U)
-    dyyU = get_dy2_fd(U)
-    dynu = get_dy_fd(nu_tilde)
-    dyynu = get_dy2_fd(nu_tilde)
-
-    dUdt = get_dUdt_fd(U, dyU, dyyU, nu_tilde)
-    dUdt[0] = 0
-    dnudt = get_dnudt(U, dyU, nu_tilde, dynu, dyynu)
-    return np.hstack([dUdt, dnudt])
-
-
 def get_dXdt(state):
     U = state[:N]
     nu_tilde = state[N:]
@@ -117,66 +77,10 @@ def get_dXdt(state):
     return np.hstack([dUdt, dnudt])
 
 
-def get_fin_diff_jac(state, rhs):
-    numElem = state.size
-
-    h = (2e-16) ** (1.0 / 3.0) * state
-
-    e_i = np.zeros(numElem)
-    jac = np.empty([numElem, numElem])
-
-    for i in range(numElem):
-        e_i[i] = 1.0
-        rhsPlus = rhs(state + h[i] * e_i)
-        rhsMinus = rhs(state - h[i] * e_i)
-
-        jac[:, i] = (rhsPlus - rhsMinus) / (2.0 * h[i])
-
-        e_i[i] = 0.0
-
-    return jac
-
-
-def get_jacobian_action(state, vec):
-    # if the system of equations is:
-    # U' = f_u( U, nu_tilde)
-    # nu_tilde' = f_n( U, nu_tilde )
-    # the jacobian J = [ df_u/dU df_u/dnu  ]
-    #                  [ df_nu/dU df_nu/nu ]
-    # and this function returns the action
-    # J * vec.
-
-    U = state[:N]
-    nu_tilde = state[N:]
-    utck = get_spline_rep_U(U)
-    ntck = get_spline_rep_nu(nu_tilde)
-    dyU = get_y_der(utck)
-    dyyU = get_yy_der(utck)
-    dynu = get_y_der(ntck)
-    dyynu = get_yy_der(ntck)
-    nuT = get_nuT(nu_tilde)
-    nuTck = get_spline_rep_nu(nuT)
-    dyNuT = get_y_der(nuTck)
-
-    vtck = get_spline_rep_U(vec)
-    dyVec = get_y_der(vtck)
-    dyyVec = get_yy_der(vtck)
-    # df_u/dU * vec
-    dfUdU = (nu + nuT) * dyyVec + dyNuT * dyVec
-
-    #
-
-
 def get_dUdt(U, dyU, dyyU, nu_tilde):
     nuT = get_nuT(nu_tilde)
     ntck = get_spline_rep_nu(nuT)
     res = 1 + (1.0 / Re_tau + nuT) * dyyU + get_y_der(ntck) * dyU
-    return res
-
-
-def get_dUdt_fd(U, dyU, dyyU, nu_tilde):
-    nuT = get_nuT(nu_tilde)
-    res = 1 + (1.0 / Re_tau + nuT) * dyyU + get_dy_fd(nuT) * dyU
     return res
 
 
