@@ -16,13 +16,11 @@ Re_tau = Re_tau_table[Re_tau_round]
 data = ke.read_data(Re_tau_round)
 Y_data = data["Y"]
 Y = Y_data
-# Y = np.linspace(0,1,300)
 
 N = len(Y)
 Yp = Y * Re_tau
 K = 0.41
 nu = 1.0 / Re_tau
-dpdx = -1.0
 sigmav = 2.0 / 3.0
 cb1 = 0.1355
 cb2 = 0.622
@@ -32,14 +30,12 @@ cw1 = cb1 / K**2 + (1 + cb2) / sigmav
 def get_spline_rep_U(U):
     U[0] = 0
     cs = interp.CubicSpline(Y, U, bc_type=("not-a-knot", "clamped"))
-    # cs = interp.CubicSpline(Y,U)
     return cs
 
 
 def get_spline_rep_nu(X):
     X[0] = 0
     cs = interp.CubicSpline(Y, X, bc_type=("not-a-knot", "clamped"))
-    # cs = interp.CubicSpline(Y,X)
     return cs
 
 
@@ -131,7 +127,6 @@ def get_dnudt(U, dyU, nu_tilde, dynu, dyynu):
         - get_Enu(dyU, nu_tilde)
         + 1.0 / sigmav * ((nu + nu_tilde) * dyynu + (1 + cb2) * dynu**2)
     )
-    # res =  get_Pnu(dyU,nu_tilde) - get_Enu(dyU,nu_tilde) + 1./sigmav * ( (nu+nu_tilde)*dyynu + (1)*dynu**2)
     res[0] = 0
     return res
 
@@ -146,7 +141,3 @@ def get_U_init():
     Udata = data["U"]
     tck = splrep(Y_data, Udata, k=5)
     return splev(Y, tck)
-
-
-def get_laminar_solution():
-    return dpdx / nu * (Y**2 - 2 * Y * Y[-1]) / 2
