@@ -7,7 +7,7 @@ import ke
 class SpalartAllmaras:
     """Spalart-Allmaras turbulence model implementation."""
 
-    def __init__(self, Re_tau_round=5200):
+    def __init__(self, Re_tau_round=5200, params_override={}):
         """Initialize the Spalart-Allmaras model."""
         # Reynolds number lookup table
         self.Re_tau_table = {
@@ -33,9 +33,20 @@ class SpalartAllmaras:
         # Model constants
         self.kappa = 0.41
         self.nu = 1.0 / self.Re_tau
-        self.sigmav = 2.0 / 3.0
-        self.cb1 = 0.1355
-        self.cb2 = 0.622
+        self.params = {
+            "sigmav": 2.0 / 3.0,
+            "cb1": 0.1355,
+            "cb2": 0.622,
+            "cw2": 0.3,
+            "cw3": 2,
+        }
+        for k in params_override:
+            self.params[k] = params_override[k]
+        self.sigmav = self.params["sigmav"]
+        self.cb1 = self.params["cb1"]
+        self.cb2 = self.params["cb2"]
+        self.cw2 = self.params["cw2"]
+        self.cw3 = self.params["cw3"]
         self.cw1 = self.cb1 / self.kappa**2 + (1 + self.cb2) / self.sigmav
 
     def get_spline_rep_U(self, U):
@@ -108,11 +119,11 @@ class SpalartAllmaras:
         return r
 
     def get_g(self, r):
-        return r + 0.3 * (r**6 - r)
+        return r + self.cw2 * (r**6 - r)
 
     def get_f(self, r):
         g = self.get_g(r)
-        res = g * (65.0 / (64.0 + g**6.0)) ** (1.0 / 6.0)
+        res = g * ((1 + self.cw3**6) / (self.cw3**6 + g**6.0)) ** (1.0 / 6.0)
         # return np.minimum(res, 2.00517475)
         return res
 
