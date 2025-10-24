@@ -5,11 +5,11 @@ from rans import RANSSolver
 np.random.seed(1)
 
 
-def get_rans_output(sa_params):
+def get_rans_output(sa_params, gen_plots=False):
     rans_solver = RANSSolver(Re_tau_round=5200, sa_params=sa_params)
     dt = 10
     steps = 20
-    states = rans_solver.run_simulation(steps=steps, dt=dt, gen_plots=True)
+    states = rans_solver.run_simulation(steps=steps, dt=dt, gen_plots=gen_plots)
     ny = rans_solver.sa_model.ny
     data = np.vstack(
         [
@@ -34,4 +34,4 @@ if __name__ == "__main__":
         "cw2": 0.3,
         "cw3": 2,
     }
-    y, data, model_out = get_rans_output(sa_params)
+    y, data, model_out = get_rans_output(sa_params, gen_plots=False)
