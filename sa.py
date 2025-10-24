@@ -27,7 +27,7 @@ class SpalartAllmaras:
         self.Y = self.Y_data
 
         # Grid properties
-        self.N = len(self.Y)
+        self.ny = len(self.Y)
         self.Yp = self.Y * self.Re_tau
 
         # Model constants
@@ -74,8 +74,8 @@ class SpalartAllmaras:
 
     def get_dXdt(self, state):
         """Compute time derivatives for the state vector [U,\nu_t]."""
-        U = state[: self.N]
-        nu_tilde = state[self.N :]
+        U = state[: self.ny]
+        nu_tilde = state[self.ny :]
         utck = self.get_spline_rep_U(U)
         ntck = self.get_spline_rep_nu(nu_tilde)
         dyU = self.get_y_der(utck)

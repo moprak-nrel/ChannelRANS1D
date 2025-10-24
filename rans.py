@@ -67,8 +67,8 @@ class RANSSolver:
             np.vstack(
                 [
                     self.sa_model.Yp,
-                    final_state[: self.sa_model.N],
-                    self.sa_model.get_nuT(final_state[self.sa_model.N :]),
+                    final_state[: self.sa_model.ny],
+                    self.sa_model.get_nuT(final_state[self.sa_model.ny :]),
                 ]
             ).T,
         )
@@ -85,12 +85,12 @@ class RANSSolver:
         fig = plt.figure()
         plt.plot(
             self.sa_model.Y,
-            states[int(steps / 2 - 1)][: self.sa_model.N],
+            states[int(steps / 2 - 1)][: self.sa_model.ny],
             "g-",
             label="RANS half-simulation",
         )
         plt.plot(
-            self.sa_model.Y, states[steps - 1][: self.sa_model.N], "b-", label="RANS"
+            self.sa_model.Y, states[steps - 1][: self.sa_model.ny], "b-", label="RANS"
         )
         plt.plot(self.sa_model.Y, self.sa_model.get_U_init(), "r--", label="DNS")
         plt.ylabel(r"$U$")
@@ -101,14 +101,14 @@ class RANSSolver:
 
         fig = plt.figure()
         plt.loglog(
-            self.sa_model.Yp[1 : self.sa_model.N],
-            states[steps - 1][1 : self.sa_model.N],
+            self.sa_model.Yp[1 : self.sa_model.ny],
+            states[steps - 1][1 : self.sa_model.ny],
             "b-",
             label="RANS",
         )
         plt.loglog(
-            self.sa_model.Yp[1 : self.sa_model.N],
-            self.sa_model.get_U_init()[1 : self.sa_model.N],
+            self.sa_model.Yp[1 : self.sa_model.ny],
+            self.sa_model.get_U_init()[1 : self.sa_model.ny],
             "r--",
             label="DNS",
         )
@@ -120,14 +120,14 @@ class RANSSolver:
 
         fig = plt.figure()
         plt.semilogx(
-            self.sa_model.Yp[1 : self.sa_model.N],
-            states[steps - 1][1 : self.sa_model.N],
+            self.sa_model.Yp[1 : self.sa_model.ny],
+            states[steps - 1][1 : self.sa_model.ny],
             "b-",
             label="RANS",
         )
         plt.semilogx(
-            self.sa_model.Yp[1 : self.sa_model.N],
-            self.sa_model.get_U_init()[1 : self.sa_model.N],
+            self.sa_model.Yp[1 : self.sa_model.ny],
+            self.sa_model.get_U_init()[1 : self.sa_model.ny],
             "r--",
             label="DNS",
         )
@@ -141,7 +141,7 @@ class RANSSolver:
         fig = plt.figure()
         plt.plot(
             self.sa_model.Y,
-            self.sa_model.get_nuT(states[steps - 1][self.sa_model.N :]),
+            self.sa_model.get_nuT(states[steps - 1][self.sa_model.ny :]),
             "b-",
             label="RANS",
         )
@@ -154,14 +154,14 @@ class RANSSolver:
 
         fig = plt.figure()
         plt.semilogx(
-            self.sa_model.Yp[1 : self.sa_model.N],
-            self.sa_model.get_nuT(states[steps - 1][self.sa_model.N + 1 :]),
+            self.sa_model.Yp[1 : self.sa_model.ny],
+            self.sa_model.get_nuT(states[steps - 1][self.sa_model.ny + 1 :]),
             "b-",
             label="RANS",
         )
         plt.semilogx(
-            self.sa_model.Yp[1 : self.sa_model.N],
-            self.sa_model.get_nu_tilde_init()[1 : self.sa_model.N],
+            self.sa_model.Yp[1 : self.sa_model.ny],
+            self.sa_model.get_nu_tilde_init()[1 : self.sa_model.ny],
             "r--",
             label="DNS",
         )
