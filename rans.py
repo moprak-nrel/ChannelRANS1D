@@ -10,10 +10,12 @@ from sa import SpalartAllmaras
 class RANSSolver:
     """RANS solver using SA."""
 
-    def __init__(self, Re_tau_round=5200):
+    def __init__(self, Re_tau_round=5200, sa_params={}):
         """Initialize the RANS solver."""
         self.Re_tau_round = Re_tau_round
-        self.sa_model = SpalartAllmaras(Re_tau_round=Re_tau_round)
+        self.sa_model = SpalartAllmaras(
+            Re_tau_round=Re_tau_round, params_override=sa_params
+        )
 
     def get_initial_state(self):
         """Get initial state vector from DNS data."""
