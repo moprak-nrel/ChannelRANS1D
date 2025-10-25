@@ -34,4 +34,7 @@ if __name__ == "__main__":
         "cw2": 0.3,
         "cw3": 2,
     }
+    # y is wall-normal coordinate (wall units)
+    # data[0], model_out[0] are the velocities in (wall units)
+    # data[1], model_out[1] are nu_t (not nu_tilde) (wall units)
     y, data, model_out = get_rans_output(sa_params, gen_plots=False)
