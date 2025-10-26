@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import ode
 
-from sa import SpalartAllmaras
+from channelrans1d.sa import SpalartAllmaras
 
 
 class RANSSolver:
@@ -97,6 +97,7 @@ class RANSSolver:
         plt.xlabel(r"$\widetilde{y}$")
         plt.legend(loc="best")
         fig.tight_layout()
+        os.makedirs("figs", exist_ok=True)
         plt.savefig(f"figs/{self.Re_tau_round}-U.pdf")
 
         fig = plt.figure()

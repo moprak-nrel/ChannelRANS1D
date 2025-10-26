@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.interpolate as interp
 
-import ke
+from channelrans1d import ke
 
 
 class SpalartAllmaras:
