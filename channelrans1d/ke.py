@@ -1,5 +1,5 @@
 import numpy as np
-from channelrans1d import CHANNELRANS1D_DNS_DATA
+from .paths import CHANNELRANS1D_DNS_DATA
 import os
 
 def read_data(Re):
