@@ -174,7 +174,13 @@ class RANSSolver:
         plt.savefig(f"figs/{self.Re_tau_round}-nu_tilde-semilog.pdf")
 
     def run_simulation(
-        self, steps=2, dt=10, restart=False, save_final=False, gen_plots=False, verbose=True
+        self,
+        steps=2,
+        dt=10,
+        restart=False,
+        save_final=False,
+        gen_plots=False,
+        verbose=True,
     ):
         """Run the RANS for specified number of steps at a given dt."""
         if restart:
