@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import ode
 
-from sa import SpalartAllmaras
+from channelrans1d.sa import SpalartAllmaras
 
 
 class RANSSolver:
@@ -36,7 +36,7 @@ class RANSSolver:
         else:
             return self.get_initial_state(), 0.0
 
-    def time_march(self, initial_state, steps, dt):
+    def time_march(self, initial_state, steps, dt, verbose=True):
         """Time stepping."""
 
         def rhs(t, state):
@@ -51,9 +51,10 @@ class RANSSolver:
         while integrator.successful() and i < steps:
             i += 1
             states[i, :] = integrator.integrate(integrator.t + dt)
-            print(
-                f"Step: {i}, dX/dt norm: {np.linalg.norm(self.sa_model.get_dXdt(states[i, :]))}"
-            )
+            if verbose:
+                print(
+                    f"Step: {i}, dX/dt norm: {np.linalg.norm(self.sa_model.get_dXdt(states[i, :]))}"
+                )
 
         return states
 
@@ -97,6 +98,7 @@ class RANSSolver:
         plt.xlabel(r"$\widetilde{y}$")
         plt.legend(loc="best")
         fig.tight_layout()
+        os.makedirs("figs", exist_ok=True)
         plt.savefig(f"figs/{self.Re_tau_round}-U.pdf")
 
         fig = plt.figure()
@@ -172,14 +174,14 @@ class RANSSolver:
         plt.savefig(f"figs/{self.Re_tau_round}-nu_tilde-semilog.pdf")
 
     def run_simulation(
-        self, steps=2, dt=10, restart=False, save_final=False, gen_plots=False
+        self, steps=2, dt=10, restart=False, save_final=False, gen_plots=False, verbose=True
     ):
         """Run the RANS for specified number of steps at a given dt."""
         if restart:
             initial_state, initial_time = self.load_restart_state()
         else:
             initial_state, initial_time = self.get_initial_state(), 0.0
-        states = self.time_march(initial_state, steps, dt)
+        states = self.time_march(initial_state, steps, dt, verbose=verbose)
         if save_final:
             self.save_final_state(states, steps, dt, initial_time)
         if gen_plots:

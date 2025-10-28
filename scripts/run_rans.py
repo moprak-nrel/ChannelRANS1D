@@ -1,6 +1,6 @@
 import numpy as np
 
-from rans import RANSSolver
+from channelrans1d.rans import RANSSolver
 
 np.random.seed(1)
 
@@ -37,4 +37,5 @@ if __name__ == "__main__":
     # y is wall-normal coordinate (wall units)
     # data[0], model_out[0] are the velocities in (wall units)
     # data[1], model_out[1] are nu_t (not nu_tilde) (wall units)
-    y, data, model_out = get_rans_output(sa_params, gen_plots=False)
+    y, data, model_out = get_rans_output(sa_params, gen_plots=True)
+    
