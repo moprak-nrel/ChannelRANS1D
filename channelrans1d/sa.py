@@ -83,16 +83,20 @@ class SpalartAllmaras:
         dynu = self.get_y_der(ntck)
         dyynu = self.get_yy_der(ntck)
 
-        dUdt = self.get_dUdt(U, dyU, dyyU, nu_tilde)
+        # Compute nuT and its spatial derivative
+        nuT = self.get_nuT(nu_tilde)
+        nutck = self.get_spline_rep_nu(nuT)
+        dynutT = self.get_y_der(nutck)
+
+        dUdt = self.get_dUdt(U, dyU, dyyU, nu_tilde, dynutT)
         dUdt[0] = 0
         dnudt = self.get_dnudt(U, dyU, nu_tilde, dynu, dyynu)
         return np.hstack([dUdt, dnudt])
 
-    def get_dUdt(self, U, dyU, dyyU, nu_tilde):
+    def get_dUdt(self, U, dyU, dyyU, nu_tilde, dynutT):
         """Compute time derivative of velocity U."""
         nuT = self.get_nuT(nu_tilde)
-        ntck = self.get_spline_rep_nu(nuT)
-        res = 1 + (self.nu + nuT) * dyyU + self.get_y_der(ntck) * dyU
+        res = 1 + (self.nu + nuT) * dyyU + dynutT * dyU
         return res
 
     def get_nuT(self, nu_tilde):
