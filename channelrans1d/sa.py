@@ -39,6 +39,7 @@ class SpalartAllmaras:
             "cb2": 0.622,
             "cw2": 0.3,
             "cw3": 2,
+            "err": 1.0
         }
         for k in params_override:
             self.params[k] = params_override[k]
@@ -47,6 +48,7 @@ class SpalartAllmaras:
         self.cb2 = self.params["cb2"]
         self.cw2 = self.params["cw2"]
         self.cw3 = self.params["cw3"]
+        self.err = self.params["err"]
         self.cw1 = self.cb1 / self.kappa**2 + (1 + self.cb2) / self.sigmav
 
     def get_spline_rep_U(self, U):
@@ -98,7 +100,7 @@ class SpalartAllmaras:
     def get_nuT(self, nu_tilde):
         """Compute nu_t from nu_tilde."""
         temp = (nu_tilde / self.nu) ** 3
-        return nu_tilde * (temp / (temp + 7.1**3))
+        return nu_tilde * (temp / (temp + 7.1**3)) * (1.0 + self.err)
 
     def get_Stilde(self, dyU, nu_tilde):
         nuT = self.get_nuT(nu_tilde)
