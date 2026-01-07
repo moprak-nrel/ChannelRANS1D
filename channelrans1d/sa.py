@@ -39,7 +39,7 @@ class SpalartAllmaras:
             "cb2": 0.622,
             "cw2": 0.3,
             "cw3": 2,
-            "err": 1.0
+            "err": 0.0
         }
         for k in params_override:
             self.params[k] = params_override[k]
@@ -74,6 +74,11 @@ class SpalartAllmaras:
         res = tck(self.Y, 2)
         return res
 
+    def multiplicative_error(self, nuT):
+        """ Add a multiplicative error to nuT """
+        return nuT * (1.0 + self.err)
+    
+
     def get_dXdt(self, state):
         """Compute time derivatives for the state vector [U,\nu_t]."""
         U = state[: self.ny]
@@ -90,9 +95,12 @@ class SpalartAllmaras:
         dnudt = self.get_dnudt(U, dyU, nu_tilde, dynu, dyynu)
         return np.hstack([dUdt, dnudt])
 
+
+
     def get_dUdt(self, U, dyU, dyyU, nu_tilde):
         """Compute time derivative of velocity U."""
         nuT = self.get_nuT(nu_tilde)
+        nuT = self.multiplicative_error(nuT)
         ntck = self.get_spline_rep_nu(nuT)
         res = 1 + (self.nu + nuT) * dyyU + self.get_y_der(ntck) * dyU
         return res
@@ -100,10 +108,11 @@ class SpalartAllmaras:
     def get_nuT(self, nu_tilde):
         """Compute nu_t from nu_tilde."""
         temp = (nu_tilde / self.nu) ** 3
-        return nu_tilde * (temp / (temp + 7.1**3)) * (1.0 + self.err)
+        return nu_tilde * (temp / (temp + 7.1**3))
 
     def get_Stilde(self, dyU, nu_tilde):
         nuT = self.get_nuT(nu_tilde)
+        nuT = self.multiplicative_error(nuT)
         S_tilde = np.zeros_like(self.Y)
         S_tilde[1:] = (
             dyU[1:]
