@@ -33,6 +33,7 @@ if __name__ == "__main__":
         "cb2": 0.622,
         "cw2": 0.3,
         "cw3": 2,
+        "err": 0.0
     }
     # y is wall-normal coordinate (wall units)
     # data[0], model_out[0] are the velocities in (wall units)
