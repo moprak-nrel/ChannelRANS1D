@@ -42,18 +42,44 @@ class RANSSolver:
         def rhs(t, state):
             return self.sa_model.get_dXdt(state)
 
+        ny = self.sa_model.ny
+        # Ensure initial_state is just U and nu_tilde
+        integrator_initial_state = initial_state[: 2 * ny]
+
         integrator = ode(rhs).set_integrator("lsoda")
-        integrator.set_initial_value(initial_state, 0)
-        states = np.empty((steps + 1, len(initial_state)))
+        integrator.set_initial_value(integrator_initial_state, 0)
+
+        # Augment state size: U, nu_tilde, dyU, dyyU, dynu, dyynu
+        states = np.empty((steps + 1, 6 * ny))
         i = 0
-        states[0, :] = initial_state
+
+        # Fill initial state
+        states[0, : 2 * ny] = integrator_initial_state
+        dyU, dyyU, dynu, dyynu = self.sa_model.get_spatial_derivatives(
+            integrator_initial_state
+        )
+        states[0, 2 * ny : 3 * ny] = dyU
+        states[0, 3 * ny : 4 * ny] = dyyU
+        states[0, 4 * ny : 5 * ny] = dynu
+        states[0, 5 * ny : 6 * ny] = dyynu
 
         while integrator.successful() and i < steps:
             i += 1
-            states[i, :] = integrator.integrate(integrator.t + dt)
+            current_state = integrator.integrate(integrator.t + dt)
+            states[i, : 2 * ny] = current_state
+
+            # Calculate and store spatial derivatives
+            dyU, dyyU, dynu, dyynu = self.sa_model.get_spatial_derivatives(
+                current_state
+            )
+            states[i, 2 * ny : 3 * ny] = dyU
+            states[i, 3 * ny : 4 * ny] = dyyU
+            states[i, 4 * ny : 5 * ny] = dynu
+            states[i, 5 * ny : 6 * ny] = dyynu
+
             if verbose:
                 print(
-                    f"Step: {i}, dX/dt norm: {np.linalg.norm(self.sa_model.get_dXdt(states[i, :]))}"
+                    f"Step: {i}, dX/dt norm: {np.linalg.norm(self.sa_model.get_dXdt(current_state))}"
                 )
 
         return states
@@ -61,6 +87,7 @@ class RANSSolver:
     def save_final_state(self, states, steps, dt, initial_time=0.0):
         """Save final state and simulation data."""
         final_state = states[-1]
+        ny = self.sa_model.ny
 
         # Save final state as a text file for plotting
         np.savetxt(
@@ -68,14 +95,14 @@ class RANSSolver:
             np.vstack(
                 [
                     self.sa_model.Yp,
-                    final_state[: self.sa_model.ny],
-                    self.sa_model.get_nuT(final_state[self.sa_model.ny :]),
+                    final_state[:ny],
+                    self.sa_model.get_nuT(final_state[ny : 2 * ny]),
                 ]
             ).T,
         )
 
         # Save restart files
-        np.save(f"{self.Re_tau_round}-last", final_state)
+        np.save(f"{self.Re_tau_round}-last", final_state[: 2 * ny])
         final_time = steps * dt + initial_time
         print("final time:", final_time)
         np.save(f"{self.Re_tau_round}-final-time", final_time)
@@ -143,7 +170,9 @@ class RANSSolver:
         fig = plt.figure()
         plt.plot(
             self.sa_model.Y,
-            self.sa_model.get_nuT(states[steps - 1][self.sa_model.ny :]),
+            self.sa_model.get_nuT(
+                states[steps - 1][self.sa_model.ny : 2 * self.sa_model.ny]
+            ),
             "b-",
             label="RANS",
         )
@@ -157,7 +186,9 @@ class RANSSolver:
         fig = plt.figure()
         plt.semilogx(
             self.sa_model.Yp[1 : self.sa_model.ny],
-            self.sa_model.get_nuT(states[steps - 1][self.sa_model.ny + 1 :]),
+            self.sa_model.get_nuT(
+                states[steps - 1][self.sa_model.ny + 1 : 2 * self.sa_model.ny]
+            ),
             "b-",
             label="RANS",
         )
