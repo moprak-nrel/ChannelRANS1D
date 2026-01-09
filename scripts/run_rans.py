@@ -14,13 +14,13 @@ def get_rans_output(sa_params, gen_plots=False):
     data = np.vstack(
         [
             states[0, :ny],
-            states[0, ny:],
+            states[0, ny : 2 * ny],
         ]
     )
     model_out = np.vstack(
         [
             states[-1, :ny],
-            rans_solver.sa_model.get_nuT(states[-1, ny:]),
+            rans_solver.sa_model.get_nuT(states[-1, ny : 2 * ny]),
         ]
     )
     return rans_solver.sa_model.Yp, data, model_out
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         "cb2": 0.622,
         "cw2": 0.3,
         "cw3": 2,
-        "err": 0.0
+        "err": 0.0,
     }
     # y is wall-normal coordinate (wall units)
     # data[0], model_out[0] are the velocities in (wall units)
