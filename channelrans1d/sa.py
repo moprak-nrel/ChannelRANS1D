@@ -79,7 +79,7 @@ class SpalartAllmaras:
         return nuT * (1.0 + self.err)
 
     def get_spatial_derivatives(self, state):
-        """Compute spatial derivatives [dyU, dyyU, dynu, dyynu]."""
+        """Compute spatial derivatives [dyU, dyyU, dynu, dyynu, dynuT]."""
         U = state[: self.ny]
         nu_tilde = state[self.ny :]
         utck = self.get_spline_rep_U(U)
@@ -88,25 +88,30 @@ class SpalartAllmaras:
         dyyU = self.get_yy_der(utck)
         dynu = self.get_y_der(ntck)
         dyynu = self.get_yy_der(ntck)
-        return dyU, dyyU, dynu, dyynu
+
+        nuT = self.get_nuT(nu_tilde)
+        nuT = self.multiplicative_error(nuT)
+        nuT_tck = self.get_spline_rep_nu(nuT)
+        dynuT = self.get_y_der(nuT_tck)
+
+        return dyU, dyyU, dynu, dyynu, dynuT
 
     def get_dXdt(self, state):
         """Compute time derivatives for the state vector [U,\nu_t]."""
         U = state[: self.ny]
         nu_tilde = state[self.ny :]
-        dyU, dyyU, dynu, dyynu = self.get_spatial_derivatives(state)
+        dyU, dyyU, dynu, dyynu, dynuT = self.get_spatial_derivatives(state)
 
-        dUdt = self.get_dUdt(U, dyU, dyyU, nu_tilde)
+        dUdt = self.get_dUdt(U, dyU, dyyU, nu_tilde, dynuT)
         dUdt[0] = 0
         dnudt = self.get_dnudt(U, dyU, nu_tilde, dynu, dyynu)
         return np.hstack([dUdt, dnudt])
 
-    def get_dUdt(self, U, dyU, dyyU, nu_tilde):
+    def get_dUdt(self, U, dyU, dyyU, nu_tilde, dynuT):
         """Compute time derivative of velocity U."""
         nuT = self.get_nuT(nu_tilde)
         nuT = self.multiplicative_error(nuT)
-        ntck = self.get_spline_rep_nu(nuT)
-        res = 1 + (self.nu + nuT) * dyyU + self.get_y_der(ntck) * dyU
+        res = 1 + (self.nu + nuT) * dyyU + dynuT * dyU
         return res
 
     def get_nuT(self, nu_tilde):

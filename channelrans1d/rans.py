@@ -55,7 +55,7 @@ class RANSSolver:
 
         # Fill initial state
         states[0, : 2 * ny] = integrator_initial_state
-        dyU, dyyU, dynu, dyynu = self.sa_model.get_spatial_derivatives(
+        dyU, dyyU, dynu, dyynu, dynuT = self.sa_model.get_spatial_derivatives(
             integrator_initial_state
         )
         states[0, 2 * ny : 3 * ny] = dyU
@@ -69,7 +69,7 @@ class RANSSolver:
             states[i, : 2 * ny] = current_state
 
             # Calculate and store spatial derivatives
-            dyU, dyyU, dynu, dyynu = self.sa_model.get_spatial_derivatives(
+            dyU, dyyU, dynu, dyynu, dynuT = self.sa_model.get_spatial_derivatives(
                 current_state
             )
             states[i, 2 * ny : 3 * ny] = dyU
