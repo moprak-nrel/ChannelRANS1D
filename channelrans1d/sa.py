@@ -126,24 +126,41 @@ class SpalartAllmaras:
         fv1 = chi3 / (chi3 + self.sa_coeffs.cv1**3)
         return nu_tilde_star * fv1
 
-    def get_Stilde(self, dyU, nu_tilde):
-        nuT_star = self.get_nuT_star(nu_tilde)
+    def get_Stilde_star(self, dyU_star, nu_tilde_star):
+        """
+        Compute non-dimensional Stilde* from dyU* and nu_tilde*.
+        Stilde* = S* + (nu_tilde* / (kappa * y*)^2) * f_v2
+        """
+        Stilde_star = np.zeros_like(self.y_star)
+
+        # S* = |dU*/dy*|
+        S_star = np.abs(dyU_star)
+
+        # Compute eddy viscosity and apply multiplicative error
+        nuT_star = self.get_nuT_star(nu_tilde_star)
         nuT_star = self.multiplicative_error(nuT_star)
-        S_tilde = np.zeros_like(self.y_star)
-        S_tilde[1:] = (
-            dyU[1:]
-            + (-(nu_tilde[1:] ** 2) / (self.nu + nuT_star[1:]) + nu_tilde[1:])
-            / (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
+
+        chi = nu_tilde_star / self.nu
+        chi3 = chi**3
+        fv1 = chi3 / (chi3 + self.sa_coeffs.cv1**3)
+        # Multiply by self.nu so we use the multiplicative error
+        fv2 = 1.0 - (nu_tilde_star / (self.nu + nuT_star))
+
+        # Stilde* = S* + (nu_tilde* / (kappa * y*)^2) * f_v2
+        Stilde_star[1:] = (
+            S_star[1:]
+            + (nu_tilde_star[1:] / (self.sa_coeffs.kappa * self.y_star[1:])**2) * fv2[1:]
         )
-        return S_tilde
+
+        return Stilde_star
 
     def get_Pnu(self, dyU, nu_tilde):
-        return self.sa_coeffs.cb1 * self.get_Stilde(dyU, nu_tilde) * nu_tilde
+        return self.sa_coeffs.cb1 * self.get_Stilde_star(dyU, nu_tilde) * nu_tilde
 
     def get_r(self, dyU, nu_tilde):
         r = np.zeros_like(self.y_star)
-        S_tilde_interior = self.get_Stilde(dyU, nu_tilde)[1:]
-        denom = S_tilde_interior * (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
+        Stilde_star_interior = self.get_Stilde_star(dyU, nu_tilde)[1:]
+        denom = Stilde_star_interior * (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
         r[1:] = nu_tilde[1:] / denom
         r[0] = 0
         return r
