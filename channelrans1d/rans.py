@@ -97,7 +97,7 @@ class RANSSolver:
                 [
                     self.sa_model.y_plus,
                     final_state[:ny],
-                    self.sa_model.get_nuT(final_state[ny : 2 * ny]),
+                    self.sa_model.get_nuT_star(final_state[ny : 2 * ny]),
                 ]
             ).T,
         )
@@ -171,7 +171,7 @@ class RANSSolver:
         fig = plt.figure()
         plt.plot(
             self.sa_model.y_star,
-            self.sa_model.get_nuT(
+            self.sa_model.get_nuT_star(
                 states[steps - 1][self.sa_model.ny : 2 * self.sa_model.ny]
             ),
             "b-",
@@ -187,7 +187,7 @@ class RANSSolver:
         fig = plt.figure()
         plt.semilogx(
             self.sa_model.y_plus[1 : self.sa_model.ny],
-            self.sa_model.get_nuT(
+            self.sa_model.get_nuT_star(
                 states[steps - 1][self.sa_model.ny + 1 : 2 * self.sa_model.ny]
             ),
             "b-",

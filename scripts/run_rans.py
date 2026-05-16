@@ -20,7 +20,7 @@ def get_rans_output(sa_params, gen_plots=False):
     model_out = np.vstack(
         [
             states[-1, :ny],
-            rans_solver.sa_model.get_nuT(states[-1, ny : 2 * ny]),
+            rans_solver.sa_model.get_nuT_star(states[-1, ny : 2 * ny]),
         ]
     )
     return rans_solver.sa_model.y_plus, data, model_out

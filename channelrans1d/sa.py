@@ -15,7 +15,7 @@ class SACoefficients:
     cw2: float = 0.3
     cw3: float = 2.0
     err: float = 0.0
-    #cv1: float = 7.1
+    cv1: float = 7.1
 
     @property
     def cw1(self) -> float:
@@ -92,7 +92,7 @@ class SpalartAllmaras:
         dynu = self.get_y_der(ntck)
         dyynu = self.get_yy_der(ntck)
 
-        nuT = self.get_nuT(nu_tilde)
+        nuT = self.get_nuT_star(nu_tilde)
         nuT = self.multiplicative_error(nuT)
         nuT_tck = self.get_spline_rep_nu(nuT)
         dynuT = self.get_y_der(nuT_tck)
@@ -112,18 +112,22 @@ class SpalartAllmaras:
 
     def get_dUdt(self, U, dyU, dyyU, nu_tilde, dynuT):
         """Compute time derivative of velocity U."""
-        nuT = self.get_nuT(nu_tilde)
+        nuT = self.get_nuT_star(nu_tilde)
         nuT = self.multiplicative_error(nuT)
         res = 1 + (self.nu + nuT) * dyyU + dynuT * dyU
         return res
 
-    def get_nuT(self, nu_tilde):
-        """Compute nu_t from nu_tilde."""
-        temp = (nu_tilde / self.nu) ** 3
-        return nu_tilde * (temp / (temp + 7.1**3))
+    def get_nuT_star(self, nu_tilde_star):
+        """Compute non-dimensional eddy viscosity nu_t_star from nu_tilde_star.
+         nu_t* = nu_tilde* * f_v1
+        """
+        chi = nu_tilde_star / self.nu
+        chi3 = chi**3
+        fv1 = chi3 / (chi3 + self.sa_coeffs.cv1**3)
+        return nu_tilde_star * fv1
 
     def get_Stilde(self, dyU, nu_tilde):
-        nuT = self.get_nuT(nu_tilde)
+        nuT = self.get_nuT_star(nu_tilde)
         nuT = self.multiplicative_error(nuT)
         S_tilde = np.zeros_like(self.y_star)
         S_tilde[1:] = (
