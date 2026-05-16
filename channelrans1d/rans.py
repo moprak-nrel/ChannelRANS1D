@@ -20,8 +20,8 @@ class RANSSolver:
 
     def get_initial_state(self):
         """Get initial state vector from DNS data."""
-        U_init = self.sa_model.get_U_init()
-        nu_tilde_init = self.sa_model.get_nu_tilde_init()
+        U_init = self.sa_model.get_U_plus_init()
+        nu_tilde_init = self.sa_model.get_nu_tilde_star_init()
         return np.hstack([U_init, nu_tilde_init])
 
     def load_restart_state(self):
@@ -121,7 +121,7 @@ class RANSSolver:
         plt.plot(
             self.sa_model.y_star, states[steps - 1][: self.sa_model.ny], "b-", label="RANS"
         )
-        plt.plot(self.sa_model.y_star, self.sa_model.get_U_init(), "r--", label="DNS")
+        plt.plot(self.sa_model.y_star, self.sa_model.get_U_plus_init(), "r--", label="DNS")
         plt.ylabel(r"$U$")
         plt.xlabel(r"$\widetilde{y}$")
         plt.legend(loc="best")
@@ -138,7 +138,7 @@ class RANSSolver:
         )
         plt.loglog(
             self.sa_model.y_plus[1 : self.sa_model.ny],
-            self.sa_model.get_U_init()[1 : self.sa_model.ny],
+            self.sa_model.get_U_plus_init()[1 : self.sa_model.ny],
             "r--",
             label="DNS",
         )
@@ -157,7 +157,7 @@ class RANSSolver:
         )
         plt.semilogx(
             self.sa_model.y_plus[1 : self.sa_model.ny],
-            self.sa_model.get_U_init()[1 : self.sa_model.ny],
+            self.sa_model.get_U_plus_init()[1 : self.sa_model.ny],
             "r--",
             label="DNS",
         )
@@ -177,7 +177,7 @@ class RANSSolver:
             "b-",
             label="RANS",
         )
-        plt.plot(self.sa_model.y_star, self.sa_model.get_nu_tilde_init(), "r--", label="DNS")
+        plt.plot(self.sa_model.y_star, self.sa_model.get_nu_tilde_star_init(), "r--", label="DNS")
         plt.ylabel(r"$\nu_\tau$")
         plt.xlabel(r"$\widetilde{y}$")
         plt.legend(loc="best")
@@ -195,7 +195,7 @@ class RANSSolver:
         )
         plt.semilogx(
             self.sa_model.y_plus[1 : self.sa_model.ny],
-            self.sa_model.get_nu_tilde_init()[1 : self.sa_model.ny],
+            self.sa_model.get_nu_tilde_star_init()[1 : self.sa_model.ny],
             "r--",
             label="DNS",
         )
