@@ -55,25 +55,25 @@ class SpalartAllmaras:
         self.kappa = 0.41
         self.sa_coeffs = sa_coeffs
 
-    def get_spline_rep_U(self, U):
+    def get_spline_rep_U(self, U) -> interp.CubicSpline:
         """Get cubic spline representation for velocity U."""
         U[0] = 0
         cs = interp.CubicSpline(self.Y, U, bc_type=("not-a-knot", "clamped"))
         return cs
 
-    def get_spline_rep_nu(self, X):
+    def get_spline_rep_nu(self, X) -> interp.CubicSpline:
         """Get cubic spline representation for nu_tilde."""
         X[0] = 0
         cs = interp.CubicSpline(self.Y, X, bc_type=("not-a-knot", "clamped"))
         return cs
 
-    def get_y_der(self, tck):
+    def get_y_der(self, tck: interp.CubicSpline):
         """Get first derivative with respect to y."""
         res = tck(self.Y, 1)
         res[-1] = 0
         return res
 
-    def get_yy_der(self, tck):
+    def get_yy_der(self, tck: interp.CubicSpline):
         """Get second derivative with respect to y."""
         res = tck(self.Y, 2)
         return res
@@ -138,7 +138,10 @@ class SpalartAllmaras:
         return self.sa_coeffs.cb1 * self.get_Stilde(dyU, nu_tilde) * nu_tilde
 
     def get_r(self, dyU, nu_tilde):
-        r = nu_tilde / (self.get_Stilde(dyU, nu_tilde) * (self.sa_coeffs.kappa * self.Y) ** 2)
+        r = np.zeros_like(self.Y)
+        S_tilde_interior = self.get_Stilde(dyU, nu_tilde)[1:]
+        denom = S_tilde_interior * (self.sa_coeffs.kappa * self.Y[1:]) ** 2
+        r[1:] = nu_tilde[1:] / denom
         r[0] = 0
         return r
 
@@ -152,8 +155,10 @@ class SpalartAllmaras:
         return res
 
     def get_Enu(self, dyU, nu_tilde):
-        Enu = (
-            self.sa_coeffs.cw1 * (nu_tilde / self.Y) ** 2 * self.get_f(self.get_r(dyU, nu_tilde))
+        Enu = np.zeros_like(self.Y)
+        f_r_interior = self.get_f(self.get_r(dyU, nu_tilde))[1:]
+        Enu[1:] = (
+            self.sa_coeffs.cw1 * (nu_tilde[1:] / self.Y[1:]) ** 2 * f_r_interior
         )
         Enu[0] = 0
         return Enu
