@@ -154,8 +154,12 @@ class SpalartAllmaras:
 
         return Stilde_star
 
-    def get_Pnu(self, dyU, nu_tilde):
-        return self.sa_coeffs.cb1 * self.get_Stilde_star(dyU, nu_tilde) * nu_tilde
+    def get_Pnu_star(self, dyU_star, nu_tilde_star):
+        """
+        Compute the non-dimensional production term P_nu*
+        P_nu* = c_b1 * S_tilde* * nu_tilde*
+        """
+        return self.sa_coeffs.cb1 * self.get_Stilde_star(dyU_star, nu_tilde_star) * nu_tilde_star
 
     def get_r(self, dyU, nu_tilde):
         r = np.zeros_like(self.y_star)
@@ -183,14 +187,14 @@ class SpalartAllmaras:
         Enu[0] = 0
         return Enu
 
-    def get_dnudt(self, U, dyU, nu_tilde, dynu, dyynu):
+    def get_dnudt(self, U, dyU_star, nu_tilde_star, dynu, dyynu):
         """Compute time derivative of nu_tilde."""
         res = (
-            self.get_Pnu(dyU, nu_tilde)
-            - self.get_Enu(dyU, nu_tilde)
+            self.get_Pnu_star(dyU_star, nu_tilde_star)
+            - self.get_Enu(dyU_star, nu_tilde_star)
             + 1.0
             / self.sa_coeffs.sigmav
-            * ((self.nu + nu_tilde) * dyynu + (1 + self.sa_coeffs.cb2) * dynu**2)
+            * ((self.nu + nu_tilde_star) * dyynu + (1 + self.sa_coeffs.cb2) * dynu**2)
         )
         res[0] = 0
         return res
