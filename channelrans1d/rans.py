@@ -95,7 +95,7 @@ class RANSSolver:
             f"data/{self.Re_tau_round}-final-state.dat",
             np.vstack(
                 [
-                    self.sa_model.Yp,
+                    self.sa_model.y_plus,
                     final_state[:ny],
                     self.sa_model.get_nuT(final_state[ny : 2 * ny]),
                 ]
@@ -113,15 +113,15 @@ class RANSSolver:
         # Velocity plots
         fig = plt.figure()
         plt.plot(
-            self.sa_model.Y,
+            self.sa_model.y_star,
             states[int(steps / 2 - 1)][: self.sa_model.ny],
             "g-",
             label="RANS half-simulation",
         )
         plt.plot(
-            self.sa_model.Y, states[steps - 1][: self.sa_model.ny], "b-", label="RANS"
+            self.sa_model.y_star, states[steps - 1][: self.sa_model.ny], "b-", label="RANS"
         )
-        plt.plot(self.sa_model.Y, self.sa_model.get_U_init(), "r--", label="DNS")
+        plt.plot(self.sa_model.y_star, self.sa_model.get_U_init(), "r--", label="DNS")
         plt.ylabel(r"$U$")
         plt.xlabel(r"$\widetilde{y}$")
         plt.legend(loc="best")
@@ -131,13 +131,13 @@ class RANSSolver:
 
         fig = plt.figure()
         plt.loglog(
-            self.sa_model.Yp[1 : self.sa_model.ny],
+            self.sa_model.y_plus[1 : self.sa_model.ny],
             states[steps - 1][1 : self.sa_model.ny],
             "b-",
             label="RANS",
         )
         plt.loglog(
-            self.sa_model.Yp[1 : self.sa_model.ny],
+            self.sa_model.y_plus[1 : self.sa_model.ny],
             self.sa_model.get_U_init()[1 : self.sa_model.ny],
             "r--",
             label="DNS",
@@ -150,13 +150,13 @@ class RANSSolver:
 
         fig = plt.figure()
         plt.semilogx(
-            self.sa_model.Yp[1 : self.sa_model.ny],
+            self.sa_model.y_plus[1 : self.sa_model.ny],
             states[steps - 1][1 : self.sa_model.ny],
             "b-",
             label="RANS",
         )
         plt.semilogx(
-            self.sa_model.Yp[1 : self.sa_model.ny],
+            self.sa_model.y_plus[1 : self.sa_model.ny],
             self.sa_model.get_U_init()[1 : self.sa_model.ny],
             "r--",
             label="DNS",
@@ -170,14 +170,14 @@ class RANSSolver:
         # Turbulent viscosity plots
         fig = plt.figure()
         plt.plot(
-            self.sa_model.Y,
+            self.sa_model.y_star,
             self.sa_model.get_nuT(
                 states[steps - 1][self.sa_model.ny : 2 * self.sa_model.ny]
             ),
             "b-",
             label="RANS",
         )
-        plt.plot(self.sa_model.Y, self.sa_model.get_nu_tilde_init(), "r--", label="DNS")
+        plt.plot(self.sa_model.y_star, self.sa_model.get_nu_tilde_init(), "r--", label="DNS")
         plt.ylabel(r"$\nu_\tau$")
         plt.xlabel(r"$\widetilde{y}$")
         plt.legend(loc="best")
@@ -186,7 +186,7 @@ class RANSSolver:
 
         fig = plt.figure()
         plt.semilogx(
-            self.sa_model.Yp[1 : self.sa_model.ny],
+            self.sa_model.y_plus[1 : self.sa_model.ny],
             self.sa_model.get_nuT(
                 states[steps - 1][self.sa_model.ny + 1 : 2 * self.sa_model.ny]
             ),
@@ -194,7 +194,7 @@ class RANSSolver:
             label="RANS",
         )
         plt.semilogx(
-            self.sa_model.Yp[1 : self.sa_model.ny],
+            self.sa_model.y_plus[1 : self.sa_model.ny],
             self.sa_model.get_nu_tilde_init()[1 : self.sa_model.ny],
             "r--",
             label="DNS",

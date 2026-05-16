@@ -42,40 +42,39 @@ class SpalartAllmaras:
         # Load data
         self.data = ke.read_data(Re_tau_round)
         self.Y_data = self.data["Y"]
-        self.Y = self.Y_data
+        self.y_star = self.Y_data
 
         # Grid properties
-        self.ny = len(self.Y)
-        self.Yp = self.Y * self.Re_tau
+        self.ny = len(self.y_star)
+        self.y_plus = self.y_star * self.Re_tau
 
         # Physics constants
         self.nu = 1.0 / self.Re_tau
 
         # Model constants
-        self.kappa = 0.41
         self.sa_coeffs = sa_coeffs
 
     def get_spline_rep_U(self, U) -> interp.CubicSpline:
         """Get cubic spline representation for velocity U."""
         U[0] = 0
-        cs = interp.CubicSpline(self.Y, U, bc_type=("not-a-knot", "clamped"))
+        cs = interp.CubicSpline(self.y_star, U, bc_type=("not-a-knot", "clamped"))
         return cs
 
     def get_spline_rep_nu(self, X) -> interp.CubicSpline:
         """Get cubic spline representation for nu_tilde."""
         X[0] = 0
-        cs = interp.CubicSpline(self.Y, X, bc_type=("not-a-knot", "clamped"))
+        cs = interp.CubicSpline(self.y_star, X, bc_type=("not-a-knot", "clamped"))
         return cs
 
     def get_y_der(self, tck: interp.CubicSpline):
         """Get first derivative with respect to y."""
-        res = tck(self.Y, 1)
+        res = tck(self.y_star, 1)
         res[-1] = 0
         return res
 
     def get_yy_der(self, tck: interp.CubicSpline):
         """Get second derivative with respect to y."""
-        res = tck(self.Y, 2)
+        res = tck(self.y_star, 2)
         return res
 
     def multiplicative_error(self, nuT):
@@ -126,11 +125,11 @@ class SpalartAllmaras:
     def get_Stilde(self, dyU, nu_tilde):
         nuT = self.get_nuT(nu_tilde)
         nuT = self.multiplicative_error(nuT)
-        S_tilde = np.zeros_like(self.Y)
+        S_tilde = np.zeros_like(self.y_star)
         S_tilde[1:] = (
             dyU[1:]
             + (-(nu_tilde[1:] ** 2) / (self.nu + nuT[1:]) + nu_tilde[1:])
-            / (self.sa_coeffs.kappa * self.Y[1:]) ** 2
+            / (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
         )
         return S_tilde
 
@@ -138,9 +137,9 @@ class SpalartAllmaras:
         return self.sa_coeffs.cb1 * self.get_Stilde(dyU, nu_tilde) * nu_tilde
 
     def get_r(self, dyU, nu_tilde):
-        r = np.zeros_like(self.Y)
+        r = np.zeros_like(self.y_star)
         S_tilde_interior = self.get_Stilde(dyU, nu_tilde)[1:]
-        denom = S_tilde_interior * (self.sa_coeffs.kappa * self.Y[1:]) ** 2
+        denom = S_tilde_interior * (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
         r[1:] = nu_tilde[1:] / denom
         r[0] = 0
         return r
@@ -155,10 +154,10 @@ class SpalartAllmaras:
         return res
 
     def get_Enu(self, dyU, nu_tilde):
-        Enu = np.zeros_like(self.Y)
+        Enu = np.zeros_like(self.y_star)
         f_r_interior = self.get_f(self.get_r(dyU, nu_tilde))[1:]
         Enu[1:] = (
-            self.sa_coeffs.cw1 * (nu_tilde[1:] / self.Y[1:]) ** 2 * f_r_interior
+            self.sa_coeffs.cw1 * (nu_tilde[1:] / self.y_star[1:]) ** 2 * f_r_interior
         )
         Enu[0] = 0
         return Enu
