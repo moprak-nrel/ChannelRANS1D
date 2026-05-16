@@ -1,13 +1,31 @@
 import numpy as np
 import scipy.interpolate as interp
-
+from dataclasses import dataclass
 from channelrans1d import ke
+
+@dataclass
+class SACoefficients:
+    """
+    From https://en.wikipedia.org/wiki/Spalart–Allmaras_turbulence_model
+    """
+    sigmav: float = 2.0 / 3.0
+    cb1: float = 0.1355
+    cb2: float = 0.622
+    kappa: float = 0.41
+    cw2: float = 0.3
+    cw3: float = 2.0
+    err: float = 0.0
+    #cv1: float = 7.1
+
+    @property
+    def cw1(self) -> float:
+        return self.cb1 / self.kappa**2 + (1.0 + self.cb2) / self.sigmav
 
 
 class SpalartAllmaras:
     """Spalart-Allmaras turbulence model implementation."""
 
-    def __init__(self, Re_tau_round=5200, params_override={}):
+    def __init__(self, Re_tau_round=5200, sa_coeffs: SACoefficients=SACoefficients()):
         """Initialize the Spalart-Allmaras model."""
         # Reynolds number lookup table
         self.Re_tau_table = {
@@ -30,26 +48,12 @@ class SpalartAllmaras:
         self.ny = len(self.Y)
         self.Yp = self.Y * self.Re_tau
 
+        # Physics constants
+        self.nu = 1.0 / self.Re_tau
+
         # Model constants
         self.kappa = 0.41
-        self.nu = 1.0 / self.Re_tau
-        self.params = {
-            "sigmav": 2.0 / 3.0,
-            "cb1": 0.1355,
-            "cb2": 0.622,
-            "cw2": 0.3,
-            "cw3": 2,
-            "err": 0.0,
-        }
-        for k in params_override:
-            self.params[k] = params_override[k]
-        self.sigmav = self.params["sigmav"]
-        self.cb1 = self.params["cb1"]
-        self.cb2 = self.params["cb2"]
-        self.cw2 = self.params["cw2"]
-        self.cw3 = self.params["cw3"]
-        self.err = self.params["err"]
-        self.cw1 = self.cb1 / self.kappa**2 + (1 + self.cb2) / self.sigmav
+        self.sa_coeffs = sa_coeffs
 
     def get_spline_rep_U(self, U):
         """Get cubic spline representation for velocity U."""
@@ -76,7 +80,7 @@ class SpalartAllmaras:
 
     def multiplicative_error(self, nuT):
         """Add a multiplicative error to nuT"""
-        return nuT * (1.0 + self.err)
+        return nuT * (1.0 + self.sa_coeffs.err)
 
     def get_spatial_derivatives(self, state):
         """Compute spatial derivatives [dyU, dyyU, dynu, dyynu, dynuT]."""
@@ -126,30 +130,30 @@ class SpalartAllmaras:
         S_tilde[1:] = (
             dyU[1:]
             + (-(nu_tilde[1:] ** 2) / (self.nu + nuT[1:]) + nu_tilde[1:])
-            / (self.kappa * self.Y[1:]) ** 2
+            / (self.sa_coeffs.kappa * self.Y[1:]) ** 2
         )
         return S_tilde
 
     def get_Pnu(self, dyU, nu_tilde):
-        return self.cb1 * self.get_Stilde(dyU, nu_tilde) * nu_tilde
+        return self.sa_coeffs.cb1 * self.get_Stilde(dyU, nu_tilde) * nu_tilde
 
     def get_r(self, dyU, nu_tilde):
-        r = nu_tilde / (self.get_Stilde(dyU, nu_tilde) * (self.kappa * self.Y) ** 2)
+        r = nu_tilde / (self.get_Stilde(dyU, nu_tilde) * (self.sa_coeffs.kappa * self.Y) ** 2)
         r[0] = 0
         return r
 
     def get_g(self, r):
-        return r + self.cw2 * (r**6 - r)
+        return r + self.sa_coeffs.cw2 * (r**6 - r)
 
     def get_f(self, r):
         g = self.get_g(r)
-        res = g * ((1 + self.cw3**6) / (self.cw3**6 + g**6.0)) ** (1.0 / 6.0)
+        res = g * ((1 + self.sa_coeffs.cw3**6) / (self.sa_coeffs.cw3**6 + g**6.0)) ** (1.0 / 6.0)
         # return np.minimum(res, 2.00517475)
         return res
 
     def get_Enu(self, dyU, nu_tilde):
         Enu = (
-            self.cw1 * (nu_tilde / self.Y) ** 2 * self.get_f(self.get_r(dyU, nu_tilde))
+            self.sa_coeffs.cw1 * (nu_tilde / self.Y) ** 2 * self.get_f(self.get_r(dyU, nu_tilde))
         )
         Enu[0] = 0
         return Enu
@@ -160,8 +164,8 @@ class SpalartAllmaras:
             self.get_Pnu(dyU, nu_tilde)
             - self.get_Enu(dyU, nu_tilde)
             + 1.0
-            / self.sigmav
-            * ((self.nu + nu_tilde) * dyynu + (1 + self.cb2) * dynu**2)
+            / self.sa_coeffs.sigmav
+            * ((self.nu + nu_tilde) * dyynu + (1 + self.sa_coeffs.cb2) * dynu**2)
         )
         res[0] = 0
         return res

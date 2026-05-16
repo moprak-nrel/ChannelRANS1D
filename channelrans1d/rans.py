@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import ode
 
-from channelrans1d.sa import SpalartAllmaras
+from channelrans1d.sa import SpalartAllmaras, SACoefficients
 
 
 class RANSSolver:
@@ -13,8 +13,9 @@ class RANSSolver:
     def __init__(self, Re_tau_round=5200, sa_params={}):
         """Initialize the RANS solver."""
         self.Re_tau_round = Re_tau_round
+        sa_coeffs = SACoefficients(**sa_params)
         self.sa_model = SpalartAllmaras(
-            Re_tau_round=Re_tau_round, params_override=sa_params
+            Re_tau_round=Re_tau_round, sa_coeffs=sa_coeffs
         )
 
     def get_initial_state(self):
