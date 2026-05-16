@@ -77,12 +77,12 @@ class SpalartAllmaras:
         res = tck(self.y_star, 2)
         return res
 
-    def multiplicative_error(self, nuT):
-        """Add a multiplicative error to nuT"""
-        return nuT * (1.0 + self.sa_coeffs.err)
+    def multiplicative_error(self, nuT_star):
+        """Add a multiplicative error to nuT star"""
+        return nuT_star * (1.0 + self.sa_coeffs.err)
 
     def get_spatial_derivatives(self, state):
-        """Compute spatial derivatives [dyU, dyyU, dynu, dyynu, dynuT]."""
+        """Compute spatial derivatives [dyU, dyyU, dynu, dyynu, dynuT_star]."""
         U = state[: self.ny]
         nu_tilde = state[self.ny :]
         utck = self.get_spline_rep_U(U)
@@ -92,29 +92,29 @@ class SpalartAllmaras:
         dynu = self.get_y_der(ntck)
         dyynu = self.get_yy_der(ntck)
 
-        nuT = self.get_nuT_star(nu_tilde)
-        nuT = self.multiplicative_error(nuT)
-        nuT_tck = self.get_spline_rep_nu(nuT)
-        dynuT = self.get_y_der(nuT_tck)
+        nuT_star = self.get_nuT_star(nu_tilde)
+        nuT_star = self.multiplicative_error(nuT_star)
+        nuT_tck = self.get_spline_rep_nu(nuT_star)
+        dynuT_star = self.get_y_der(nuT_tck)
 
-        return dyU, dyyU, dynu, dyynu, dynuT
+        return dyU, dyyU, dynu, dyynu, dynuT_star
 
     def get_dXdt(self, state):
         """Compute time derivatives for the state vector [U,\nu_t]."""
         U = state[: self.ny]
         nu_tilde = state[self.ny :]
-        dyU, dyyU, dynu, dyynu, dynuT = self.get_spatial_derivatives(state)
+        dyU, dyyU, dynu, dyynu, dynuT_star = self.get_spatial_derivatives(state)
 
-        dUdt = self.get_dUdt(U, dyU, dyyU, nu_tilde, dynuT)
+        dUdt = self.get_dUdt(U, dyU, dyyU, nu_tilde, dynuT_star)
         dUdt[0] = 0
         dnudt = self.get_dnudt(U, dyU, nu_tilde, dynu, dyynu)
         return np.hstack([dUdt, dnudt])
 
-    def get_dUdt(self, U, dyU, dyyU, nu_tilde, dynuT):
+    def get_dUdt(self, U, dyU, dyyU, nu_tilde, dynuT_star):
         """Compute time derivative of velocity U."""
-        nuT = self.get_nuT_star(nu_tilde)
-        nuT = self.multiplicative_error(nuT)
-        res = 1 + (self.nu + nuT) * dyyU + dynuT * dyU
+        nuT_star = self.get_nuT_star(nu_tilde)
+        nuT_star = self.multiplicative_error(nuT_star)
+        res = 1 + (self.nu + nuT_star) * dyyU + dynuT_star * dyU
         return res
 
     def get_nuT_star(self, nu_tilde_star):
@@ -127,12 +127,12 @@ class SpalartAllmaras:
         return nu_tilde_star * fv1
 
     def get_Stilde(self, dyU, nu_tilde):
-        nuT = self.get_nuT_star(nu_tilde)
-        nuT = self.multiplicative_error(nuT)
+        nuT_star = self.get_nuT_star(nu_tilde)
+        nuT_star = self.multiplicative_error(nuT_star)
         S_tilde = np.zeros_like(self.y_star)
         S_tilde[1:] = (
             dyU[1:]
-            + (-(nu_tilde[1:] ** 2) / (self.nu + nuT[1:]) + nu_tilde[1:])
+            + (-(nu_tilde[1:] ** 2) / (self.nu + nuT_star[1:]) + nu_tilde[1:])
             / (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
         )
         return S_tilde
@@ -180,8 +180,8 @@ class SpalartAllmaras:
 
     def get_nu_tilde_init(self):
         """Get initial condition for nu_tilde from data, this is just set to nu_t."""
-        nuT_data = (-self.data["uv"] / self.data["dUdy"]) / self.Re_tau
-        return nuT_data
+        nuT_star_data = (-self.data["uv"] / self.data["dUdy"]) / self.Re_tau
+        return nuT_star_data
 
     def get_U_init(self):
         """Get initial condition for velocity U from data."""
