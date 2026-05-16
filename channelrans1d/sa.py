@@ -101,16 +101,16 @@ class SpalartAllmaras:
 
     def get_dXdt(self, state):
         """Compute time derivatives for the state vector [U,\nu_t]."""
-        U = state[: self.ny]
-        nu_tilde = state[self.ny :]
-        dyU, dyyU, dynu, dyynu, dynuT_star = self.get_spatial_derivatives(state)
+        U_star = state[: self.ny]
+        nu_tilde_star = state[self.ny :]
+        dyU_star, dyyU_star, dynu_star, dyynu_star, dynuT_star = self.get_spatial_derivatives(state)
 
-        dUdt = self.get_dUdt(U, dyU, dyyU, nu_tilde, dynuT_star)
-        dUdt[0] = 0
-        dnudt = self.get_dnudt(U, dyU, nu_tilde, dynu, dyynu)
-        return np.hstack([dUdt, dnudt])
+        dUdt_star = self.get_dUdt_star(U_star, dyU_star, dyyU_star, nu_tilde_star, dynuT_star)
+        dUdt_star[0] = 0
+        dnudt_star = self.get_dnudt_star(U_star, dyU_star, nu_tilde_star, dynu_star, dyynu_star)
+        return np.hstack([dUdt_star, dnudt_star])
 
-    def get_dUdt(self, U, dyU, dyyU, nu_tilde, dynuT_star):
+    def get_dUdt_star(self, U, dyU, dyyU, nu_tilde, dynuT_star):
         """Compute time derivative of velocity U."""
         nuT_star = self.get_nuT_star(nu_tilde)
         nuT_star = self.multiplicative_error(nuT_star)
@@ -161,40 +161,62 @@ class SpalartAllmaras:
         """
         return self.sa_coeffs.cb1 * self.get_Stilde_star(dyU_star, nu_tilde_star) * nu_tilde_star
 
-    def get_r(self, dyU, nu_tilde):
+    def get_r(self, dyU_star, nu_tilde_star):
+        """
+        Compute the dimensionless parameter r.
+        r = nu_tilde* / (S_tilde* * (kappa * y*)^2)
+        """
         r = np.zeros_like(self.y_star)
-        Stilde_star_interior = self.get_Stilde_star(dyU, nu_tilde)[1:]
-        denom = Stilde_star_interior * (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
-        r[1:] = nu_tilde[1:] / denom
-        r[0] = 0
+        S_tilde_star_interior = self.get_Stilde_star(dyU_star, nu_tilde_star)[1:]
+        denom = S_tilde_star_interior * (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
+        r[1:] = nu_tilde_star[1:] / denom
+
         return r
 
-    def get_g(self, r):
-        return r + self.sa_coeffs.cw2 * (r**6 - r)
-
-    def get_f(self, r):
-        g = self.get_g(r)
+    def get_fw(self, dyU_star, nu_tilde_star):
+        r = self.get_r(dyU_star, nu_tilde_star)
+        g = r + self.sa_coeffs.cw2 * (r**6 - r)
         res = g * ((1 + self.sa_coeffs.cw3**6) / (self.sa_coeffs.cw3**6 + g**6.0)) ** (1.0 / 6.0)
         # return np.minimum(res, 2.00517475)
         return res
 
-    def get_Enu(self, dyU, nu_tilde):
-        Enu = np.zeros_like(self.y_star)
-        f_r_interior = self.get_f(self.get_r(dyU, nu_tilde))[1:]
-        Enu[1:] = (
-            self.sa_coeffs.cw1 * (nu_tilde[1:] / self.y_star[1:]) ** 2 * f_r_interior
+    def get_Dnu_star(self, dyU_star, nu_tilde_star):
+        """
+        Compute the non-dimensional destruction term D_nu*
+        D_nu* = c_w1 * f_w * (nu_tilde* / y*)^2
+        """
+        Dnu_star = np.zeros_like(self.y_star)
+        fw = self.get_fw(dyU_star, nu_tilde_star)
+        Dnu_star[1:] = (
+            self.sa_coeffs.cw1
+            * fw[1:]
+            * (nu_tilde_star[1:] / self.y_star[1:]) ** 2
         )
-        Enu[0] = 0
-        return Enu
+        return Dnu_star
 
-    def get_dnudt(self, U, dyU_star, nu_tilde_star, dynu, dyynu):
-        """Compute time derivative of nu_tilde."""
+    def get_Tnu_star(self, nu_tilde_star, dynu_star, dyynu_star):
+        """
+        Compute the non-dimensional diffusion term T_star.
+        T* = (1/sigma) * [ (1/Re_tau + nu_tilde*) * d^2(nu_tilde*)/dy*^2 + (1 + c_b2) * (d(nu_tilde*)/dy*)^2 ]
+        """
+        Tnu_star = np.zeros_like(self.y_star)
+        
+        # Note: self.nu represents 1 / Re_tau
+        Tnu_star[1:] = (1.0 / self.sa_coeffs.sigmav) * (
+            (self.nu + nu_tilde_star[1:]) * dyynu_star[1:] 
+            + (1.0 + self.sa_coeffs.cb2) * dynu_star[1:]**2
+        )
+        return Tnu_star
+
+    def get_dnudt_star(self, U_star, dyU_star, nu_tilde_star, dynu_star, dyynu_star):
+        """
+        Compute the non-dimensional time derivative of nu_tilde*.
+        d(nu_tilde*)/dt* = P* - D* + T*
+        """
         res = (
             self.get_Pnu_star(dyU_star, nu_tilde_star)
-            - self.get_Enu(dyU_star, nu_tilde_star)
-            + 1.0
-            / self.sa_coeffs.sigmav
-            * ((self.nu + nu_tilde_star) * dyynu + (1 + self.sa_coeffs.cb2) * dynu**2)
+            - self.get_Dnu_star(dyU_star, nu_tilde_star)
+            + self.get_Tnu_star(nu_tilde_star, dynu_star, dyynu_star)
         )
         res[0] = 0
         return res
