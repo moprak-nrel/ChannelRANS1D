@@ -54,14 +54,8 @@ class SpalartAllmaras:
         # Model constants
         self.sa_coeffs = sa_coeffs
 
-    def get_spline_rep_U_plus(self, U_plus) -> interp.CubicSpline:
-        """Get cubic spline representation for velocity U."""
-        U_plus[0] = 0
-        cs = interp.CubicSpline(self.y_star, U_plus, bc_type=("not-a-knot", "clamped"))
-        return cs
-
-    def get_spline_rep_nu_star(self, X) -> interp.CubicSpline:
-        """Get cubic spline representation for nu_tilde."""
+    def get_spline_rep(self, X) -> interp.CubicSpline:
+        """Get cubic spline representation for field X"""
         X[0] = 0
         cs = interp.CubicSpline(self.y_star, X, bc_type=("not-a-knot", "clamped"))
         return cs
@@ -85,8 +79,8 @@ class SpalartAllmaras:
         """Compute spatial derivatives [dyU+, dyyU+, dynu*, dyynu*, dynuT*]."""
         U_plus = state[: self.ny]
         nu_tilde_star = state[self.ny :]
-        utck = self.get_spline_rep_U_plus(U_plus)
-        ntck = self.get_spline_rep_nu_star(nu_tilde_star)
+        utck = self.get_spline_rep(U_plus)
+        ntck = self.get_spline_rep(nu_tilde_star)
         dyU_plus = self.get_y_der(utck)
         dyyU_plus = self.get_yy_der(utck)
         dynu_star = self.get_y_der(ntck)
@@ -94,7 +88,7 @@ class SpalartAllmaras:
 
         nuT_star = self.get_nuT_star(nu_tilde_star)
         nuT_star = self.multiplicative_error(nuT_star)
-        nuT_tck = self.get_spline_rep_nu_star(nuT_star)
+        nuT_tck = self.get_spline_rep(nuT_star)
         dynuT_star = self.get_y_der(nuT_tck)
 
         return dyU_plus, dyyU_plus, dynu_star, dyynu_star, dynuT_star
