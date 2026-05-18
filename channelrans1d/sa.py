@@ -160,38 +160,32 @@ class SpalartAllmaras:
 
         return Stilde_star
 
-    def get_Pnu_star(self, dyU_plus, nu_tilde_star):
+    def get_Pnu_star(self, dyU_plus, nu_tilde_star, S_tilde_star):
         """
         Compute the non-dimensional production term P_nu*
         P_nu* = c_b1 * S_tilde* * nu_tilde*
         """
-        return (
-            self.sa_coeffs.cb1
-            * self.get_Stilde_star(
-                dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star
-            )
-            * nu_tilde_star
-        )
+        return self.sa_coeffs.cb1 * S_tilde_star * nu_tilde_star
 
-    def get_r(self, dyU_plus, nu_tilde_star):
+    def get_r(self, dyU_plus, nu_tilde_star, S_tilde_star):
         """
         Compute the dimensionless parameter r.
         r = nu_tilde* / (S_tilde* * (kappa * y*)^2)
         """
         r = np.zeros_like(self.y_star)
-        S_tilde_star_interior = self.get_Stilde_star(
-            dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star
-        )[1:]
         denom = (
-            S_tilde_star_interior
-            * (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
+            S_tilde_star[1:] * (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
         )
         r[1:] = nu_tilde_star[1:] / denom
 
         return r
 
-    def get_fw(self, dyU_plus, nu_tilde_star):
-        r = self.get_r(dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star)
+    def get_fw(self, dyU_plus, nu_tilde_star, S_tilde_star):
+        r = self.get_r(
+            dyU_plus=dyU_plus,
+            nu_tilde_star=nu_tilde_star,
+            S_tilde_star=S_tilde_star,
+        )
         g = r + self.sa_coeffs.cw2 * (r**6 - r)
         res = g * (
             (1 + self.sa_coeffs.cw3**6) / (self.sa_coeffs.cw3**6 + g**6.0)
@@ -199,13 +193,17 @@ class SpalartAllmaras:
         # return np.minimum(res, 2.00517475)
         return res
 
-    def get_Dnu_star(self, dyU_plus, nu_tilde_star):
+    def get_Dnu_star(self, dyU_plus, nu_tilde_star, S_tilde_star):
         """
         Compute the non-dimensional destruction term D_nu*
         D_nu* = c_w1 * f_w * (nu_tilde* / y*)^2
         """
         Dnu_star = np.zeros_like(self.y_star)
-        fw = self.get_fw(dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star)
+        fw = self.get_fw(
+            dyU_plus=dyU_plus,
+            nu_tilde_star=nu_tilde_star,
+            S_tilde_star=S_tilde_star,
+        )
         Dnu_star[1:] = (
             self.sa_coeffs.cw1
             * fw[1:]
@@ -232,9 +230,20 @@ class SpalartAllmaras:
         Compute the non-dimensional time derivative of nu_tilde*.
         d(nu_tilde*)/dt* = P* - D* + T*
         """
+        S_tilde_star = self.get_Stilde_star(
+            dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star
+        )
         res = (
-            self.get_Pnu_star(dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star)
-            - self.get_Dnu_star(dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star)
+            self.get_Pnu_star(
+                dyU_plus=dyU_plus,
+                nu_tilde_star=nu_tilde_star,
+                S_tilde_star=S_tilde_star,
+            )
+            - self.get_Dnu_star(
+                dyU_plus=dyU_plus,
+                nu_tilde_star=nu_tilde_star,
+                S_tilde_star=S_tilde_star,
+            )
             + self.get_Tnu_star(
                 nu_tilde_star=nu_tilde_star,
                 dynu_star=dynu_star,
