@@ -129,6 +129,7 @@ class SpalartAllmaras:
             nuT_star = self.get_nuT_star(nu_tilde_star=nu_tilde_star)
             nuT_star = self.multiplicative_error(nuT_star=nuT_star)
         res = 1.0 + (self.nu + nuT_star) * dyyU_plus + dynuT_star * dyU_plus
+        res[0] = 0
         return res
 
     def get_Stilde_star(self, dyU_plus, nu_tilde_star, nuT_star=None):
@@ -280,7 +281,6 @@ class SpalartAllmaras:
             dynuT_star=dynuT_star,
             nuT_star=nuT_star,
         )
-        dUdt_plus[0] = 0
         dnudt_star = self.get_dnudt_star(
             dyU_plus=dyU_plus,
             nu_tilde_star=nu_tilde_star,
