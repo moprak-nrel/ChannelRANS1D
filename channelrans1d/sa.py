@@ -107,7 +107,7 @@ class SpalartAllmaras:
         nuT_tck = self.get_spline_rep(nuT_star)
         dynuT_star = self.get_y_der(nuT_tck)
 
-        return dyU_plus, dyyU_plus, dynu_star, dyynu_star, dynuT_star
+        return dyU_plus, dyyU_plus, dynu_star, dyynu_star, dynuT_star, nuT_star
 
     def get_nuT_star(self, nu_tilde_star):
         """Compute non-dimensional eddy viscosity nu_t_star from nu_tilde_star.
@@ -118,17 +118,20 @@ class SpalartAllmaras:
         fv1 = chi3 / (chi3 + self.sa_coeffs.cv1**3)
         return nu_tilde_star * fv1
 
-    def get_dUdt_plus(self, dyU_plus, dyyU_plus, nu_tilde_star, dynuT_star):
+    def get_dUdt_plus(
+        self, dyU_plus, dyyU_plus, nu_tilde_star, dynuT_star, nuT_star=None
+    ):
         """
         Compute non-dimensional time derivative of velocity U plus
         d(U+)/dt = 1 + (1/Re_tau + nu_t*) * d^2(U+)/dy*^2 + d(nu_t*)/dy* * dU*/dy*
         """
-        nuT_star = self.get_nuT_star(nu_tilde_star=nu_tilde_star)
-        nuT_star = self.multiplicative_error(nuT_star=nuT_star)
+        if nuT_star is None:
+            nuT_star = self.get_nuT_star(nu_tilde_star=nu_tilde_star)
+            nuT_star = self.multiplicative_error(nuT_star=nuT_star)
         res = 1.0 + (self.nu + nuT_star) * dyyU_plus + dynuT_star * dyU_plus
         return res
 
-    def get_Stilde_star(self, dyU_plus, nu_tilde_star):
+    def get_Stilde_star(self, dyU_plus, nu_tilde_star, nuT_star=None):
         """
         Compute non-dimensional Stilde* from dyU* and nu_tilde*.
         Stilde* = S* + (nu_tilde* / (kappa * y*)^2) * f_v2
@@ -139,8 +142,9 @@ class SpalartAllmaras:
         S_star = np.abs(dyU_plus)
 
         # Compute eddy viscosity and apply multiplicative error
-        nuT_star = self.get_nuT_star(nu_tilde_star=nu_tilde_star)
-        nuT_star = self.multiplicative_error(nuT_star=nuT_star)
+        if nuT_star is None:
+            nuT_star = self.get_nuT_star(nu_tilde_star=nu_tilde_star)
+            nuT_star = self.multiplicative_error(nuT_star=nuT_star)
 
         chi = nu_tilde_star / self.nu
         chi3 = chi**3
@@ -233,13 +237,15 @@ class SpalartAllmaras:
         )
         return Tnu_star
 
-    def get_dnudt_star(self, dyU_plus, nu_tilde_star, dynu_star, dyynu_star):
+    def get_dnudt_star(
+        self, dyU_plus, nu_tilde_star, dynu_star, dyynu_star, nuT_star=None
+    ):
         """
         Compute the non-dimensional time derivative of nu_tilde*.
         d(nu_tilde*)/dt* = P* - D* + T*
         """
         S_tilde_star = self.get_Stilde_star(
-            dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star
+            dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star, nuT_star=nuT_star
         )
         res = (
             self.get_Pnu_star(
@@ -264,7 +270,7 @@ class SpalartAllmaras:
     def get_dXdt(self, state):
         """Compute time derivative residuals"""
         nu_tilde_star = state[self.ny :]
-        dyU_plus, dyyU_plus, dynu_star, dyynu_star, dynuT_star = (
+        dyU_plus, dyyU_plus, dynu_star, dyynu_star, dynuT_star, nuT_star = (
             self.get_spatial_derivatives(state=state)
         )
         dUdt_plus = self.get_dUdt_plus(
@@ -272,6 +278,7 @@ class SpalartAllmaras:
             dyyU_plus=dyyU_plus,
             nu_tilde_star=nu_tilde_star,
             dynuT_star=dynuT_star,
+            nuT_star=nuT_star,
         )
         dUdt_plus[0] = 0
         dnudt_star = self.get_dnudt_star(

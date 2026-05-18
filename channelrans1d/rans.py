@@ -56,13 +56,13 @@ class RANSSolver:
 
         # Fill initial state
         states[0, : 2 * ny] = integrator_initial_state
-        dyU, dyyU, dynu, dyynu, dynuT = self.sa_model.get_spatial_derivatives(
-            integrator_initial_state
+        dyU_plus, dyyU_plus, dynu_star, dyynu_star, _, _ = (
+            self.sa_model.get_spatial_derivatives(integrator_initial_state)
         )
-        states[0, 2 * ny : 3 * ny] = dyU
-        states[0, 3 * ny : 4 * ny] = dyyU
-        states[0, 4 * ny : 5 * ny] = dynu
-        states[0, 5 * ny : 6 * ny] = dyynu
+        states[0, 2 * ny : 3 * ny] = dyU_plus
+        states[0, 3 * ny : 4 * ny] = dyyU_plus
+        states[0, 4 * ny : 5 * ny] = dynu_star
+        states[0, 5 * ny : 6 * ny] = dyynu_star
 
         while integrator.successful() and i < steps:
             i += 1
@@ -70,13 +70,13 @@ class RANSSolver:
             states[i, : 2 * ny] = current_state
 
             # Calculate and store spatial derivatives
-            dyU, dyyU, dynu, dyynu, dynuT = self.sa_model.get_spatial_derivatives(
-                current_state
+            dyU_plus, dyyU_plus, dynu_star, dyynu_star, _, _ = (
+                self.sa_model.get_spatial_derivatives(current_state)
             )
-            states[i, 2 * ny : 3 * ny] = dyU
-            states[i, 3 * ny : 4 * ny] = dyyU
-            states[i, 4 * ny : 5 * ny] = dynu
-            states[i, 5 * ny : 6 * ny] = dyynu
+            states[i, 2 * ny : 3 * ny] = dyU_plus
+            states[i, 3 * ny : 4 * ny] = dyyU_plus
+            states[i, 4 * ny : 5 * ny] = dynu_star
+            states[i, 5 * ny : 6 * ny] = dyynu_star
 
             if verbose:
                 print(
@@ -119,9 +119,17 @@ class RANSSolver:
             label="RANS half-simulation",
         )
         plt.plot(
-            self.sa_model.y_star, states[steps - 1][: self.sa_model.ny], "b-", label="RANS"
+            self.sa_model.y_star,
+            states[steps - 1][: self.sa_model.ny],
+            "b-",
+            label="RANS",
         )
-        plt.plot(self.sa_model.y_star, self.sa_model.get_U_plus_init(), "r--", label="DNS")
+        plt.plot(
+            self.sa_model.y_star,
+            self.sa_model.get_U_plus_init(),
+            "r--",
+            label="DNS",
+        )
         plt.ylabel(r"$U$")
         plt.xlabel(r"$\widetilde{y}$")
         plt.legend(loc="best")
@@ -177,7 +185,12 @@ class RANSSolver:
             "b-",
             label="RANS",
         )
-        plt.plot(self.sa_model.y_star, self.sa_model.get_nu_tilde_star_init(), "r--", label="DNS")
+        plt.plot(
+            self.sa_model.y_star,
+            self.sa_model.get_nu_tilde_star_init(),
+            "r--",
+            label="DNS",
+        )
         plt.ylabel(r"$\nu_\tau$")
         plt.xlabel(r"$\widetilde{y}$")
         plt.legend(loc="best")
