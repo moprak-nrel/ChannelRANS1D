@@ -28,7 +28,7 @@ class SpalartAllmaras:
     """Spalart-Allmaras turbulence model implementation."""
 
     def __init__(
-        self, Re_tau_round=5200, sa_coeffs: SACoefficients = SACoefficients()
+        self, Re_tau_round=5200, g_clamp_val=1e6, sa_coeffs: SACoefficients = SACoefficients()
     ):
         """Initialize the Spalart-Allmaras model."""
         # Reynolds number lookup table
@@ -51,7 +51,8 @@ class SpalartAllmaras:
         # Grid properties
         self.ny = len(self.y_star)
         self.y_plus = self.y_star * self.Re_tau
-
+        self.g_clamp_val=g_clamp_val
+        
         # Physics constants
         self.nu = 1.0 / self.Re_tau
 
@@ -197,7 +198,7 @@ class SpalartAllmaras:
             S_tilde_star=S_tilde_star,
         )
         g = r + self.sa_coeffs.cw2 * (r**6 - r)
-        g = np.clip(g, -1e6, 1e6)
+        g = np.clip(g, -self.g_clamp_val, self.g_clamp_val)
         fw = g * (
             (1 + self.sa_coeffs.cw3**6) / (self.sa_coeffs.cw3**6 + g**6.0)
         ) ** (1.0 / 6.0)
