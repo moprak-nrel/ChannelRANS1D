@@ -147,9 +147,6 @@ class SpalartAllmaras:
             nuT_star = self.get_nuT_star(nu_tilde_star=nu_tilde_star)
             nuT_star = self.multiplicative_error(nuT_star=nuT_star)
 
-        chi = nu_tilde_star / self.nu
-        chi3 = chi**3
-        fv1 = chi3 / (chi3 + self.sa_coeffs.cv1**3)
         # Multiply by self.nu so we use the multiplicative error
         fv2 = 1.0 - (nu_tilde_star / (self.nu + nuT_star))
 
