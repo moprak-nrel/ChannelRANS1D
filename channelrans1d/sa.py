@@ -160,19 +160,27 @@ class SpalartAllmaras:
 
         return Stilde_star
 
-    def get_Pnu_star(self, dyU_plus, nu_tilde_star, S_tilde_star):
+    def get_Pnu_star(self, dyU_plus, nu_tilde_star, S_tilde_star=None):
         """
         Compute the non-dimensional production term P_nu*
         P_nu* = c_b1 * S_tilde* * nu_tilde*
         """
+        if S_tilde_star is None:
+            S_tilde_star = self.get_Stilde_star(
+                dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star
+            )
         return self.sa_coeffs.cb1 * S_tilde_star * nu_tilde_star
 
-    def get_r(self, dyU_plus, nu_tilde_star, S_tilde_star):
+    def get_r(self, dyU_plus, nu_tilde_star, S_tilde_star=None):
         """
         Compute the dimensionless parameter r.
         r = nu_tilde* / (S_tilde* * (kappa * y*)^2)
         """
         r = np.zeros_like(self.y_star)
+        if S_tilde_star is None:
+            S_tilde_star = self.get_Stilde_star(
+                dyU_plus=dyU_plus, nu_tilde_star=nu_tilde_star
+            )
         denom = (
             S_tilde_star[1:] * (self.sa_coeffs.kappa * self.y_star[1:]) ** 2
         )
@@ -180,7 +188,7 @@ class SpalartAllmaras:
 
         return r
 
-    def get_fw(self, dyU_plus, nu_tilde_star, S_tilde_star):
+    def get_fw(self, dyU_plus, nu_tilde_star, S_tilde_star=None):
         r = self.get_r(
             dyU_plus=dyU_plus,
             nu_tilde_star=nu_tilde_star,
@@ -193,7 +201,7 @@ class SpalartAllmaras:
         # return np.minimum(res, 2.00517475)
         return res
 
-    def get_Dnu_star(self, dyU_plus, nu_tilde_star, S_tilde_star):
+    def get_Dnu_star(self, dyU_plus, nu_tilde_star, S_tilde_star=None):
         """
         Compute the non-dimensional destruction term D_nu*
         D_nu* = c_w1 * f_w * (nu_tilde* / y*)^2
