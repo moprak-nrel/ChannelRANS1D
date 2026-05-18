@@ -10,12 +10,12 @@ from channelrans1d.sa import SpalartAllmaras, SACoefficients
 class RANSSolver:
     """RANS solver using SA."""
 
-    def __init__(self, Re_tau_round=5200, sa_params={}):
+    def __init__(self, Re_tau_round=5200, g_clamp_val=1e6, sa_params={}):
         """Initialize the RANS solver."""
         self.Re_tau_round = Re_tau_round
         sa_coeffs = SACoefficients(**sa_params)
         self.sa_model = SpalartAllmaras(
-            Re_tau_round=Re_tau_round, sa_coeffs=sa_coeffs
+            Re_tau_round=Re_tau_round, g_clamp_val=g_clamp_val, sa_coeffs=sa_coeffs
         )
 
     def get_initial_state(self):
