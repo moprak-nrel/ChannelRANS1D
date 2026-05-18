@@ -197,11 +197,10 @@ class SpalartAllmaras:
             S_tilde_star=S_tilde_star,
         )
         g = r + self.sa_coeffs.cw2 * (r**6 - r)
-        res = g * (
+        fw = g * (
             (1 + self.sa_coeffs.cw3**6) / (self.sa_coeffs.cw3**6 + g**6.0)
         ) ** (1.0 / 6.0)
-        # return np.minimum(res, 2.00517475)
-        return res
+        return fw
 
     def get_Dnu_star(self, dyU_plus, nu_tilde_star, S_tilde_star=None):
         """
