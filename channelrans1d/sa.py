@@ -100,17 +100,16 @@ class SpalartAllmaras:
         return dyU_plus, dyyU_plus, dynu_star, dyynu_star, dynuT_star
 
     def get_dXdt(self, state):
-        """Compute time derivatives for the state vector [U,\nu_t]."""
-        U_plus = state[: self.ny]
+        """Compute time derivative residuals"""
         nu_tilde_star = state[self.ny :]
         dyU_plus, dyyU_plus, dynu_star, dyynu_star, dynuT_star = self.get_spatial_derivatives(state)
 
-        dUdt_plus = self.get_dUdt_plus(U_plus, dyU_plus, dyyU_plus, nu_tilde_star, dynuT_star)
+        dUdt_plus = self.get_dUdt_plus(dyU_plus, dyyU_plus, nu_tilde_star, dynuT_star)
         dUdt_plus[0] = 0
-        dnudt_star = self.get_dnudt_star(U_plus, dyU_plus, nu_tilde_star, dynu_star, dyynu_star)
+        dnudt_star = self.get_dnudt_star(dyU_plus, nu_tilde_star, dynu_star, dyynu_star)
         return np.hstack([dUdt_plus, dnudt_star])
 
-    def get_dUdt_plus(self, U_plus, dyU_plus, dyyU_plus, nu_tilde_star, dynuT_star):
+    def get_dUdt_plus(self, dyU_plus, dyyU_plus, nu_tilde_star, dynuT_star):
         """
         Compute non-dimensional time derivative of velocity U plus
         d(U+)/dt = 1 + (1/Re_tau + nu_t*) * d^2(U+)/dy*^2 + d(nu_t*)/dy* * dU*/dy*
@@ -211,7 +210,7 @@ class SpalartAllmaras:
         )
         return Tnu_star
 
-    def get_dnudt_star(self, U_plus, dyU_plus, nu_tilde_star, dynu_star, dyynu_star):
+    def get_dnudt_star(self, dyU_plus, nu_tilde_star, dynu_star, dyynu_star):
         """
         Compute the non-dimensional time derivative of nu_tilde*.
         d(nu_tilde*)/dt* = P* - D* + T*
