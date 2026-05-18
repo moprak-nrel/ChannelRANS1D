@@ -197,6 +197,7 @@ class SpalartAllmaras:
             S_tilde_star=S_tilde_star,
         )
         g = r + self.sa_coeffs.cw2 * (r**6 - r)
+        g = np.clip(g, -1e6, 1e6)
         fw = g * (
             (1 + self.sa_coeffs.cw3**6) / (self.sa_coeffs.cw3**6 + g**6.0)
         ) ** (1.0 / 6.0)
