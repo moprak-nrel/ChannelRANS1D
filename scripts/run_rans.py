@@ -20,10 +20,10 @@ def get_rans_output(sa_params, gen_plots=False):
     model_out = np.vstack(
         [
             states[-1, :ny],
-            rans_solver.sa_model.get_nuT(states[-1, ny : 2 * ny]),
+            rans_solver.sa_model.get_nuT_star(states[-1, ny : 2 * ny]),
         ]
     )
-    return rans_solver.sa_model.Yp, data, model_out
+    return rans_solver.sa_model.y_plus, data, model_out
 
 
 if __name__ == "__main__":
@@ -38,4 +38,8 @@ if __name__ == "__main__":
     # y is wall-normal coordinate (wall units)
     # data[0], model_out[0] are the velocities in (wall units)
     # data[1], model_out[1] are nu_t (not nu_tilde) (wall units)
+    import time
+    time_s = time.time()
     y, data, model_out = get_rans_output(sa_params, gen_plots=True)
+    time_e = time.time()
+    print(f"Elapsed {time_e-time_s:.2f}s")
